@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">Universal Device Connector</string>
+    <string name="bluetooth_tab">Bluetooth</string>
+    <string name="wifi_tab">WiFi</string>
+    <string name="network_tab">Network</string>
+    <string name="serial_tab">Serial</string>
+    <string name="refresh">Refresh</string>
+    <string name="diagnose">Diagnose</string>
+    <string name="authentication_required">Authentication Required</string>
+    <string name="enter_password">Enter password for user "admin":</string>
+    <string name="access_denied">Access denied</string>
+    <string name="permissions_denied">Required permissions denied</string>
+    <string name="bluetooth_disabled">Bluetooth is disabled</string>
+    <string name="wifi_disabled">WiFi is disabled</string>
+    <string name="scanning_devices">Scanning devices...</string>
+    <string name="scan_completed">Scan completed</string>
+    <string name="select_device_first">Select a device first</string>
+    <string name="diagnosis_report">DIAGNOSIS REPORT</string>
+    <string name="no_devices_found">No devices found</string>
+</resources>
