@@ -17,4 +17,8 @@
     <string name="select_device_first">Select a device first</string>
     <string name="diagnosis_report">DIAGNOSIS REPORT</string>
     <string name="no_devices_found">No devices found</string>
+    <string name="topology">Topology</string>
+    <string name="network_topology">Network Topology</string>
+    <string name="reset_view">Reset View</string>
+    <string name="legend">Legend</string>
 </resources>

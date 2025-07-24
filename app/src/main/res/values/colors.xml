@@ -1,22 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#2196F3</color>
-    <color name="colorPrimaryDark">#1976D2</color>
-    <color name="colorAccent">#FF5722</color>
-    <color name="background_light">#F5F5F5</color>
-    <color name="divider_color">#E0E0E0</color>
-    <color name="list_selector">#E3F2FD</color>
+    <!-- Primary Brand Colors -->
+    <color name="colorPrimary">#1E3A8A</color>
+    <color name="colorPrimaryDark">#1E40AF</color>
+    <color name="colorAccent">#F59E0B</color>
+    <color name="accent_bright">#10B981</color>
+    
+    <!-- Background Colors -->
+    <color name="background_primary">#F8FAFC</color>
+    <color name="surface_elevated">#FFFFFF</color>
+    
+    <!-- Text Colors -->
+    <color name="text_primary">#1F2937</color>
+    <color name="text_secondary">#6B7280</color>
+    <color name="text_secondary_light">#E5E7EB</color>
+    
+    <!-- Device Node Colors -->
+    <color name="node_router">#EF4444</color>
+    <color name="node_printer">#10B981</color>
+    <color name="node_camera">#3B82F6</color>
+    <color name="node_computer">#8B5CF6</color>
+    <color name="node_phone">#F59E0B</color>
+    <color name="node_iot">#8B4513</color>
+    <color name="node_unknown">#6B7280</color>
+    
+    <!-- Chat Colors -->
+    <color name="chat_user_bubble">#3B82F6</color>
+    <color name="chat_ai_bubble">#F3F4F6</color>
+    
+    <!-- Switch Colors -->
+    <color name="switch_thumb_color">#10B981</color>
+    <color name="switch_track_color">#D1FAE5</color>
+    
+    <!-- UI Elements -->
+    <color name="divider_color">#E5E7EB</color>
+    <color name="list_selector">#EBF8FF</color>
     <color name="topology_background">#FAFAFA</color>
-    <color name="node_router">#FF5722</color>
-    <color name="node_printer">#4CAF50</color>
-    <color name="node_camera">#2196F3</color>
-    <color name="node_computer">#9C27B0</color>
-    <color name="node_phone">#FF9800</color>
-    <color name="node_iot">#795548</color>
-    <color name="node_unknown">#607D8B</color>
-    <color name="connection_ethernet">#757575</color>
-    <color name="connection_wifi">#4CAF50</color>
-    <color name="connection_bluetooth">#2196F3</color>
-    <color name="gateway_indicator">#FFC107</color>
-    <color name="selection_indicator">#FF4081</color>
 </resources>

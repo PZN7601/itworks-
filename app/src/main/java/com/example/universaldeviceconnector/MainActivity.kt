@@ -15,6 +15,8 @@ import android.os.Build
 import android.os.Bundle
 import android.text.InputType
 import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -23,6 +25,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.viewpager.widget.ViewPager
 import com.google.android.material.tabs.TabLayout
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.*
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -68,8 +71,8 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    private var bluetoothAdapter: BluetoothAdapter? = null
-    private lateinit var wifiManager: WifiManager
+    var bluetoothAdapter: BluetoothAdapter? = null
+    lateinit var wifiManager: WifiManager
     val deviceCache = mutableMapOf<String, DeviceInfo>()
     
     private val httpClient = OkHttpClient.Builder()
@@ -83,11 +86,16 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tabLayout: TabLayout
     private lateinit var viewPager: ViewPager
     private lateinit var adapter: DevicePagerAdapter
+    private lateinit var aiAssistantFab: FloatingActionButton
     
     private val logFileName = "log_${APP_MODE}.log"
     private val debugFileName = "debug_${APP_MODE}.log"
     private val cacheFileName = "device_cache.json"
     private val networkDevicesFile = "network_devices.json"
+
+    // Remote capabilities
+    private lateinit var remoteManager: RemoteManager
+    private lateinit var aiTroubleshooter: AITroubleshooter
 
     private val requestPermissionsLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -112,7 +120,10 @@ class MainActivity : AppCompatActivity() {
         val services: List<String> = emptyList(),
         val compatibility: String = "Unknown",
         val lastSeen: Long = System.currentTimeMillis(),
-        val isActive: Boolean = false
+        val isActive: Boolean = false,
+        val remoteAccessible: Boolean = false,
+        val credentials: Map<String, String> = emptyMap(),
+        val healthStatus: String = "Unknown"
     ) : java.io.Serializable
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -128,22 +139,163 @@ class MainActivity : AppCompatActivity() {
         
         setContentView(R.layout.activity_main)
         
-        // Initialize Bluetooth
+        // Initialize components
         val bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         bluetoothAdapter = bluetoothManager.adapter
-        
         wifiManager = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+        
+        // Initialize remote capabilities and AI
+        remoteManager = RemoteManager(this)
+        aiTroubleshooter = AITroubleshooter(this)
+        
+        setupUI()
+        authenticateUser()
+    }
+
+    private fun setupUI() {
+        // Setup toolbar
+        setSupportActionBar(findViewById(R.id.toolbar))
+        supportActionBar?.title = "Universal Device Connector"
+        supportActionBar?.subtitle = "Professional Network Analysis"
         
         tabLayout = findViewById(R.id.tabLayout)
         viewPager = findViewById(R.id.viewPager)
+        aiAssistantFab = findViewById(R.id.aiAssistantFab)
         
         adapter = DevicePagerAdapter(this, mainScope, ioScope)
         viewPager.adapter = adapter
         tabLayout.setupWithViewPager(viewPager)
         
-        authenticateUser()
+        // Setup AI Assistant FAB
+        aiAssistantFab.setOnClickListener {
+            showAIAssistant()
+        }
+        
+        // Add tab icons
+        setupTabIcons()
     }
 
+    private fun setupTabIcons() {
+        tabLayout.getTabAt(0)?.setIcon(R.drawable.ic_bluetooth)
+        tabLayout.getTabAt(1)?.setIcon(R.drawable.ic_wifi)
+        tabLayout.getTabAt(2)?.setIcon(R.drawable.ic_network)
+        tabLayout.getTabAt(3)?.setIcon(R.drawable.ic_usb)
+    }
+
+    private fun showAIAssistant() {
+        val intent = Intent(this, AIAssistantActivity::class.java)
+        intent.putExtra("devices", ArrayList(deviceCache.values))
+        startActivity(intent)
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.main_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_remote_access -> {
+                showRemoteAccessDialog()
+                true
+            }
+            R.id.action_settings -> {
+                startActivity(Intent(this, SettingsActivity::class.java))
+                true
+            }
+            R.id.action_export_report -> {
+                exportDiagnosticReport()
+                true
+            }
+            R.id.action_cloud_sync -> {
+                syncWithCloud()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    private fun showRemoteAccessDialog() {
+        val devices = deviceCache.values.filter { it.remoteAccessible }
+        if (devices.isEmpty()) {
+            Toast.makeText(this, "No remote accessible devices found", Toast.LENGTH_SHORT).show()
+            return
+        }
+        
+        val deviceNames = devices.map { "${it.name} (${it.address})" }.toTypedArray()
+        
+        AlertDialog.Builder(this, R.style.ModernAlertDialog)
+            .setTitle("Remote Access")
+            .setIcon(R.drawable.ic_remote_access)
+            .setItems(deviceNames) { _, which ->
+                val selectedDevice = devices[which]
+                remoteManager.initiateRemoteConnection(selectedDevice)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun exportDiagnosticReport() {
+        ioScope.launch {
+            val report = generateComprehensiveReport()
+            val fileName = "UDC_Report_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())}.json"
+            val file = File(getExternalFilesDir(null), fileName)
+            file.writeText(report)
+            
+            mainScope.launch {
+                Toast.makeText(this@MainActivity, "Report exported: $fileName", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    private fun syncWithCloud() {
+        ioScope.launch {
+            try {
+                remoteManager.syncDeviceDataWithCloud(deviceCache.values.toList())
+                mainScope.launch {
+                    Toast.makeText(this@MainActivity, "Cloud sync completed", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                mainScope.launch {
+                    Toast.makeText(this@MainActivity, "Cloud sync failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private fun generateComprehensiveReport(): String {
+        val report = JSONObject().apply {
+            put("timestamp", System.currentTimeMillis())
+            put("app_version", "1.0")
+            put("total_devices", deviceCache.size)
+            
+            val devicesArray = org.json.JSONArray()
+            deviceCache.values.forEach { device ->
+                val deviceJson = JSONObject().apply {
+                    put("name", device.name)
+                    put("address", device.address)
+                    put("vendor", device.vendor)
+                    put("category", device.category)
+                    put("ports", org.json.JSONArray(device.ports))
+                    put("services", org.json.JSONArray(device.services))
+                    put("compatibility", device.compatibility)
+                    put("health_status", device.healthStatus)
+                    put("remote_accessible", device.remoteAccessible)
+                    put("last_seen", device.lastSeen)
+                }
+                devicesArray.put(deviceJson)
+            }
+            put("devices", devicesArray)
+            
+            // Add AI insights
+            val aiInsights = aiTroubleshooter.generateNetworkInsights(deviceCache.values.toList())
+            put("ai_insights", aiInsights)
+        }
+        
+        return report.toString(2)
+    }
+
+    // Keep existing methods from previous implementation
     private fun checkKillSwitch(): Boolean {
         val file = File(filesDir, KILL_SWITCH_FILE)
         if (file.exists()) {
@@ -179,18 +331,18 @@ class MainActivity : AppCompatActivity() {
         val input = EditText(this)
         input.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
         
-        AlertDialog.Builder(this)
-            .setTitle("Authentication Required")
+        AlertDialog.Builder(this, R.style.ModernAlertDialog)
+            .setTitle("🔐 Authentication Required")
             .setMessage("Enter password for user \"$APP_AUTHORIZED_USER\":")
             .setView(input)
             .setCancelable(false)
-            .setPositiveButton("OK") { _, _ ->
+            .setPositiveButton("AUTHENTICATE") { _, _ ->
                 val enteredPw = input.text.toString()
                 if (md5(enteredPw) == SECURE_PASS_HASH) {
                     logEvent("User authenticated successfully")
                     checkPermissionsAndStartScans()
                 } else if (APP_MODE == "experimental") {
-                    AlertDialog.Builder(this)
+                    AlertDialog.Builder(this, R.style.ModernAlertDialog)
                         .setTitle("Bypass Permission")
                         .setMessage("Verbal permission granted? (yes)")
                         .setCancelable(false)
@@ -232,7 +384,9 @@ class MainActivity : AppCompatActivity() {
                         vendor = deviceJson.optString("vendor", "Unknown"),
                         category = deviceJson.optString("category", "Unknown"),
                         compatibility = deviceJson.optString("compatibility", "Unknown"),
-                        lastSeen = deviceJson.optLong("lastSeen", System.currentTimeMillis())
+                        lastSeen = deviceJson.optLong("lastSeen", System.currentTimeMillis()),
+                        remoteAccessible = deviceJson.optBoolean("remote_accessible", false),
+                        healthStatus = deviceJson.optString("health_status", "Unknown")
                     )
                     deviceCache[key] = device
                 }
@@ -267,6 +421,8 @@ class MainActivity : AppCompatActivity() {
                     put("category", device.category)
                     put("compatibility", device.compatibility)
                     put("lastSeen", device.lastSeen)
+                    put("remote_accessible", device.remoteAccessible)
+                    put("health_status", device.healthStatus)
                 }
                 jsonObj.put(key, deviceJson)
             }

@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId "com.example.universaldeviceconnector"
-        minSdk 21
+        minSdk 24
         targetSdk 34
         versionCode 1
         versionName "1.0"
@@ -23,12 +23,10 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
-    
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
-    
     kotlinOptions {
         jvmTarget = '1.8'
     }
@@ -41,16 +39,15 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'androidx.viewpager:viewpager:1.0.0'
     
+    // Networking
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    
     // Coroutines
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
     
-    // HTTP client
-    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
-    
-    // JSON parsing
+    // JSON
     implementation 'org.json:json:20231013'
     
-    // Testing
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
